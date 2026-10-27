@@ -16,7 +16,7 @@ The developer is a native Czech speaker learning English since 1st grade.
 - **Target OS:** Must run identically in modern browsers on Windows and Linux Mint.
 - **60 FPS Performance Rule:**
   - Use pure HTML5 `<canvas>` with Vanilla JavaScript (ES6 modules or simple script tags). No heavy bundlers or frameworks required.
-  - **BANNED in the draw loop:** `ctx.shadowBlur`, heavy particle emitters (>30 particles), per-frame `new Image()` creation, or large off-screen canvas allocations. These destroy frame rates on integrated Intel HD GPUs.
+  - **BANNED in the draw loop:** `ctx.shadowBlur`, heavy particle emitters (more than 25 on screen), per-frame `new Image()` creation, or large off-screen canvas allocations. These destroy frame rates on integrated Intel HD GPUs.
   - Use simple geometric shapes, crisp pixel art, or lightweight sprite sheets.
   - Always use `deltaTime` (time between frames) for movement so the game runs at the same speed on every computer.
 
@@ -24,7 +24,34 @@ The developer is a native Czech speaker learning English since 1st grade.
 - Write clean, well-commented code in English.
 - When updating code, clearly tell the developer **which file** to open and **where** to paste the changes (or provide the full updated file if it is short).
 
-## 5. Developers folders
+## 5. Files and Folders
 
-- `~/agents_martin`
-(more to come in the future)
+```
+martin-knight/
+├── index.html                  # Main entry point (loads canvas and JS files)
+├── style.css                   # Centering the canvas, dark background
+├── README.md                   # Project overview and controls
+├── AGENTS.md                   # Root AI rules (persona, English coaching, tech constraints)
+├── agents_martin               # Developer's folder (this is his playground) may contain additional AGENTS_xx.md
+├── docs/                       # Domain-specific AI instructions & prompt guides
+│   ├── AGENTS_GAMEPLAY.md      # Rules for player physics, combat, and enemies
+│   ├── AGENTS_LEVELS.md        # Rules for level grids, platforms, and rooms
+│   └── AGENTS_GRAPHICS.md      # Rules for 60 FPS optimization & drawing
+├── assets/                     # Optional sprites and sounds (start with code-drawn shapes!)
+│   ├── sprites/
+│   └── audio/
+└── src/                        # Modular JavaScript files
+    ├── main.js                 # Game loop (requestAnimationFrame) and state management
+    ├── input.js                # Keyboard listener (move: Arrow keys / WASD, jump: Space or W, sword: X or Z)
+    ├── player.js               # Hero movement, jumping, gravity, and sword slash
+    ├── enemy.js                # Enemy types and patrol patterns
+    ├── level.js                # 2D array tilemap and collision detection
+    └── ui.js                   # Health masks/hearts and FPS counter
+```
+
+
+You are not allowed to modify files outside of this repo.
+You should not modify the root AGENTS.md unless necessary.
+You can edit existing files in this repo.
+You can add add new folders and files.
+You can rename or delete files in `assets/ ` , `src/` folders .

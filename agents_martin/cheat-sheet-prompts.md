@@ -37,10 +37,10 @@ Copy-paste or adapt these 4 prompts one by one into the AI chat. Test the game i
 ---
 
 ### Step 1: Create the Game Window & Dark Cave Arena
-*Generates `index.html`, `style.css`, and a working 60 FPS loop.*
+*Generates `index.html`, `style.css`, `src/main.js`, and the FPS counter in `src/ui.js`.*
 
 **Prompt to copy:**
-> Please read `AGENTS.md` and `docs/AGENTS_ENGINE.md`. I want to start building my game. Create a simple `index.html`, `style.css`, and `src/main.js`. Make an 800x450 canvas in the center of the screen with a dark underground cave background and a solid stone floor at the bottom. Use an opaque canvas context (`alpha: false`) and show an FPS counter in the top-left corner so I can check the speed.
+> Please read `AGENTS.md` and `docs/AGENTS_GRAPHICS.md`. I want to start building my game. Create a simple `index.html`, `style.css`, `src/main.js`, and `src/ui.js`. Make an 800x450 canvas in the center of the screen with a dark underground cave background and a solid stone floor at the bottom. Use an opaque canvas context (`alpha: false`) and show an FPS counter from `src/ui.js` in the top-left corner so I can check the speed.
 
 ---
 
@@ -48,7 +48,7 @@ Copy-paste or adapt these 4 prompts one by one into the AI chat. Test the game i
 *Adds keyboard controls, gravity, and variable jump height.*
 
 **Prompt to copy:**
-> Now read `agents/AGENTS_HERO.md` (or help me create it). Let's add our hero! Create `src/player.js` and `src/input.js`. Draw the player as a small white knight with a dark cloak and two little horns. I want to move left and right with Arrow keys (or A and D) and jump with Spacebar (or W). Make the jump go higher if I hold the Spacebar down, and make falling slightly faster than rising.
+> Now read `docs/AGENTS_GAMEPLAY.md`. Let's add our hero! Create `src/player.js` and `src/input.js`. Draw the player as a small white knight with a dark cloak and two little horns. I want to move left and right with Arrow keys (or A and D) and jump with Spacebar (or W). Make the jump go higher if I hold the Spacebar down, and make falling slightly faster than rising.
 
 ---
 
@@ -64,4 +64,4 @@ Copy-paste or adapt these 4 prompts one by one into the AI chat. Test the game i
 *Completes the playable action-adventure loop.*
 
 **Prompt to copy:**
-> Let's add combat! When I press the X key (or J key), make the knight do a fast sword slash in the direction he is facing, showing a bright white crescent hitbox for 150 milliseconds. Also create `src/enemy.js` and put two red crawling bugs on the platforms that walk back and forth. If my sword hits a bug 3 times, the bug disappears (add a small knockback on each hit). If the bug touches me, I lose 1 health mask. Draw 5 white health masks in the top-left corner below the FPS counter.
+> Let's add combat! When I press the X key (or the Z key), make the knight do a fast sword slash in the direction he is facing, showing a bright white crescent hitbox for 150 milliseconds. Also create `src/enemy.js` and put two red crawling bugs on the platforms that walk back and forth. If my sword hits a bug 3 times, the bug disappears (add a small knockback on each hit). If the bug touches me, I lose 1 health mask. In `src/ui.js`, draw 5 white health masks in the top-left corner below the FPS counter.

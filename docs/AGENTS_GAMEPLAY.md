@@ -6,6 +6,7 @@ When the developer asks for player movement, combat, or enemies, follow these de
    - **Variable Jump Height:** If the player taps the Jump key, make a short hop. If they hold the Jump key, jump higher.
    - **Gravity:** Falling should be slightly faster than rising to feel impactful.
 2. **Combat (Sword Nail Slash):**
+   - **Sword key:** X or Z. Both keys do the same slash.
    - Attacks should show a quick visual hitbox (like a white crescent or rectangle) in front of the player for 150 milliseconds.
    - Include a brief cooldown so the player cannot spam attacks infinitely.
    - Add **knockback** (pushing the enemy or player slightly back on hit) to make hits feel powerful.
