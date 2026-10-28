@@ -1,5 +1,5 @@
-import { isLeftHeld, isRightHeld, isJumpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js";
-import { tilesTouching } from "./level.js";
+import { isLeftHeld, isRightHeld, isJumpHeld, isDownHeld, isUpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js?v=15";
+import { tilesTouching } from "./level.js?v=15";
 
 const PLAYER_WIDTH = 22;
 const PLAYER_HEIGHT = 36;
@@ -29,7 +29,10 @@ export function createPlayer(startX, groundY) {
     facing: 1,
     onGround: true,
     slashTimer: 0,
+    slashDown: false,
     waveTimer: 0,
+    waveDown: false,
+    waveUp: false,
     waveHasHit: false,
     attackCooldown: 0,
     slashHasHit: false,
@@ -37,6 +40,8 @@ export function createPlayer(startX, groundY) {
     knockDir: 0,
     health: 8,
     hurtTimer: 0,
+    pogo: false,
+    pogoSafe: 0,
   };
 }
 
@@ -59,14 +64,29 @@ export function getPlayerBox(player) {
 
 // One touch takes one circle. The timer stops the next hit for a moment.
 export function hurtPlayer(player) {
-  if (player.hurtTimer > 0 || player.health <= 0) {
+  if (player.hurtTimer > 0 || player.health <= 0 || player.pogoSafe > 0) {
     return;
   }
   player.health -= 1;
   player.hurtTimer = 1;
 }
 
+// A downward hit pops him back up, about as high as a full jump.
+export function bouncePlayer(player) {
+  player.vy = JUMP_SPEED;
+  player.onGround = false;
+  player.pogo = true;
+  player.pogoSafe = 0.2;
+}
+
 export function updatePlayer(player, level, canvasWidth, deltaTime) {
+  if (player.onGround) {
+    player.pogo = false;
+  }
+  if (player.pogoSafe > 0) {
+    player.pogoSafe -= deltaTime;
+  }
+
   const left = isLeftHeld();
   const right = isRightHeld();
 
@@ -89,19 +109,27 @@ export function updatePlayer(player, level, canvasWidth, deltaTime) {
     player.onGround = false;
   }
 
+  const attackDown = !player.onGround && isDownHeld();
+
   if (swordJustPressed() && player.attackCooldown <= 0) {
     player.slashTimer = SLASH_TIME;
     player.attackCooldown = SLASH_COOLDOWN;
     player.slashHasHit = false;
+    player.slashDown = attackDown;
   }
 
   if (waveJustPressed()) {
+    const attackUp = isUpHeld();
     player.waveTimer = WAVE_TIME;
     player.waveHasHit = false;
+    // W + E points up on the ground or in the air. S still points the wave down.
+    player.waveUp = attackUp;
+    player.waveDown = !attackUp && attackDown;
   }
 
   // Letting go early cuts the climb, so a tap is a short hop.
-  if (player.vy < SHORT_HOP_SPEED && !isJumpHeld()) {
+  // A pogo bounce stays a full hop. A normal jump still gets shorter if he lets go.
+  if (player.vy < SHORT_HOP_SPEED && !isJumpHeld() && !player.pogo) {
     player.vy = SHORT_HOP_SPEED;
   }
 
@@ -201,6 +229,10 @@ function keepInsideScreen(player, canvasWidth) {
 }
 
 function hitStoneWithSlash(player, level) {
+  if (player.slashDown) {
+    return;
+  }
+
   const attack = getAttackBox(player);
   if (!attack || player.slashHasHit) {
     return;
@@ -220,6 +252,15 @@ function hitStoneWithSlash(player, level) {
 export function getAttackBox(player) {
   if (player.slashTimer <= 0) {
     return null;
+  }
+
+  if (player.slashDown) {
+    return {
+      x: player.x + PLAYER_WIDTH / 2 - 14,
+      y: player.y + PLAYER_HEIGHT - 10,
+      width: 28,
+      height: 30,
+    };
   }
 
   const width = 26;
@@ -291,6 +332,24 @@ export function getWaveBox(player) {
     return null;
   }
 
+  if (player.waveDown) {
+    return {
+      x: player.x + PLAYER_WIDTH / 2 - 16,
+      y: player.y + PLAYER_HEIGHT - 10,
+      width: 32,
+      height: 28,
+    };
+  }
+
+  if (player.waveUp) {
+    return {
+      x: player.x + PLAYER_WIDTH / 2 - 16,
+      y: player.y - 18,
+      width: 32,
+      height: 28,
+    };
+  }
+
   const width = 18;
   const height = 32;
   return {
@@ -309,13 +368,25 @@ export function drawWave(ctx, player) {
   }
 
   ctx.save();
-  ctx.translate(player.x + PLAYER_WIDTH / 2, player.y + 18);
-  ctx.scale(player.facing, 1);
   ctx.strokeStyle = "#e6edf3";
   ctx.lineWidth = 3;
   ctx.beginPath();
-  // A half circle. The flat side faces the knight, and the curve points forward.
-  ctx.arc(12, 0, 16, -Math.PI / 2, Math.PI / 2);
+  if (player.waveDown) {
+    ctx.translate(player.x + PLAYER_WIDTH / 2, player.y + PLAYER_HEIGHT - 10);
+    // Same half circle as the normal attack, turned to point down.
+    ctx.rotate(Math.PI / 2);
+    ctx.arc(12, 0, 16, -Math.PI / 2, Math.PI / 2);
+  } else if (player.waveUp) {
+    ctx.translate(player.x + PLAYER_WIDTH / 2, player.y + 10);
+    // Same half circle, turned to point up, close to his horns.
+    ctx.rotate(-Math.PI / 2);
+    ctx.arc(12, 0, 16, -Math.PI / 2, Math.PI / 2);
+  } else {
+    ctx.translate(player.x + PLAYER_WIDTH / 2, player.y + 18);
+    ctx.scale(player.facing, 1);
+    // A half circle. The flat side faces the knight, and the curve points forward.
+    ctx.arc(12, 0, 16, -Math.PI / 2, Math.PI / 2);
+  }
   ctx.stroke();
   ctx.restore();
 }
@@ -326,12 +397,19 @@ export function drawSlash(ctx, player) {
   }
 
   ctx.save();
-  ctx.translate(player.x + PLAYER_WIDTH / 2, player.y + 18);
-  ctx.scale(player.facing, 1);
   ctx.strokeStyle = "#e6edf3";
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(16, 0, 14, -1.1, 1.1);
+  if (player.slashDown) {
+    ctx.translate(player.x + PLAYER_WIDTH / 2, player.y + PLAYER_HEIGHT - 10);
+    // Same sword curve as the normal attack, turned to point down.
+    ctx.rotate(Math.PI / 2);
+    ctx.arc(16, 0, 14, -1.1, 1.1);
+  } else {
+    ctx.translate(player.x + PLAYER_WIDTH / 2, player.y + 18);
+    ctx.scale(player.facing, 1);
+    ctx.arc(16, 0, 14, -1.1, 1.1);
+  }
   ctx.stroke();
   ctx.restore();
 }

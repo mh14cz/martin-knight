@@ -4,12 +4,13 @@ const held = new Set();
 let jumpWasHeld = false;
 let swordWasHeld = false;
 let waveWasHeld = false;
+let respawnWasHeld = false;
 
 window.addEventListener("keydown", (event) => {
   held.add(event.code);
 
   // Space would scroll the page. Keep it for jumping instead.
-  if (event.code === "Space" || event.code === "ArrowLeft" || event.code === "ArrowRight") {
+  if (event.code === "Space" || event.code === "ArrowLeft" || event.code === "ArrowRight" || event.code === "ArrowDown") {
     event.preventDefault();
   }
 });
@@ -28,6 +29,14 @@ export function isRightHeld() {
 
 export function isJumpHeld() {
   return held.has("Space") || held.has("KeyW");
+}
+
+export function isDownHeld() {
+  return held.has("KeyS") || held.has("ArrowDown");
+}
+
+export function isUpHeld() {
+  return held.has("KeyW");
 }
 
 // True only on the frame the jump key goes down, so holding it does not bounce.
@@ -49,5 +58,12 @@ export function waveJustPressed() {
   const heldNow = held.has("KeyE");
   const pressed = heldNow && !waveWasHeld;
   waveWasHeld = heldNow;
+  return pressed;
+}
+
+export function respawnJustPressed() {
+  const heldNow = held.has("KeyQ");
+  const pressed = heldNow && !respawnWasHeld;
+  respawnWasHeld = heldNow;
   return pressed;
 }

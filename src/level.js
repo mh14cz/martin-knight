@@ -3,6 +3,7 @@
 // # = solid stone
 // P = where the knight starts (put P in the air, just above the floor)
 // E = where a bug starts (put E in the air, just above the floor)
+// F = a flying enemy (it hovers in that spot, it does not drop to the floor)
 
 export const TILE_SIZE = 25;
 
@@ -14,7 +15,7 @@ const MAP = [
   "................................",
   "................................",
   "................................",
-  "................................",
+  "...............F................",
   "................................",
   "................................",
   "................................",
@@ -36,6 +37,15 @@ export function createLevel() {
   for (let row = 0; row < rows.length; row += 1) {
     for (let col = 0; col < rows[row].length; col += 1) {
       const cell = rows[row][col];
+      if (cell === "F") {
+        enemies.push({
+          kind: "flyer",
+          x: col * TILE_SIZE,
+          y: row * TILE_SIZE,
+        });
+        rows[row][col] = ".";
+        continue;
+      }
       if (cell !== "P" && cell !== "E") {
         continue;
       }
