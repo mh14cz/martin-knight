@@ -12,3 +12,6 @@ When the developer asks for player movement, combat, or enemies, follow these de
    - Add **knockback** (pushing the enemy or player slightly back on hit) to make hits feel powerful.
 3. **Prompt Coaching:**
    - If the developer just says *"Add an enemy"*, ask him a quick design question before writing complex code, or build a basic one and ask: *"Should this bug patrol back and forth, or chase the player when they get close?"*
+4. **Key List:**
+   - The keys the game uses are listed in `docs/KEYS.md`.
+   - After every new key, and whenever a key's action changes, update `docs/KEYS.md` in the same change.

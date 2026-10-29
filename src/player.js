@@ -1,5 +1,5 @@
-import { isLeftHeld, isRightHeld, isJumpHeld, isDownHeld, isUpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js?v=15";
-import { tilesTouching } from "./level.js?v=15";
+import { dashJustPressed, isLeftHeld, isRightHeld, isJumpHeld, isDownHeld, isUpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js?v=31";
+import { tilesTouching } from "./level.js?v=31";
 
 const PLAYER_WIDTH = 22;
 const PLAYER_HEIGHT = 36;
@@ -19,6 +19,10 @@ const SLASH_COOLDOWN = 0.4;
 const WAVE_TIME = 0.5;
 const KNOCKBACK_SPEED = 220;
 const KNOCKBACK_TIME = 0.09;
+// A dash is a short, fast slide in the direction he is facing.
+const DASH_SPEED = 720;
+const DASH_TIME = 0.12;
+const DASH_COOLDOWN = 0.4;
 
 export function createPlayer(startX, groundY) {
   return {
@@ -42,6 +46,9 @@ export function createPlayer(startX, groundY) {
     hurtTimer: 0,
     pogo: false,
     pogoSafe: 0,
+    dashTimer: 0,
+    dashCooldown: 0,
+    dashDir: 1,
   };
 }
 
@@ -51,6 +58,7 @@ export function placePlayer(player, centerX, feetY) {
   player.vx = 0;
   player.vy = 0;
   player.onGround = true;
+  player.dashTimer = 0;
 }
 
 export function getPlayerBox(player) {
@@ -90,7 +98,18 @@ export function updatePlayer(player, level, canvasWidth, deltaTime) {
   const left = isLeftHeld();
   const right = isRightHeld();
 
-  if (player.knockTimer > 0) {
+  if (dashJustPressed() && player.dashCooldown <= 0) {
+    player.dashTimer = DASH_TIME;
+    player.dashCooldown = DASH_COOLDOWN;
+    player.dashDir = player.facing;
+  }
+
+  if (player.dashTimer > 0) {
+    // Slide fast the way he is looking, then normal walking comes back.
+    player.vx = player.dashDir * DASH_SPEED;
+    player.facing = player.dashDir;
+    player.dashTimer -= deltaTime;
+  } else if (player.knockTimer > 0) {
     // A hit pushes him back for a short moment.
     player.vx = player.knockDir * KNOCKBACK_SPEED;
     player.knockTimer -= deltaTime;
@@ -149,6 +168,9 @@ export function updatePlayer(player, level, canvasWidth, deltaTime) {
   }
   if (player.hurtTimer > 0) {
     player.hurtTimer -= deltaTime;
+  }
+  if (player.dashCooldown > 0) {
+    player.dashCooldown -= deltaTime;
   }
 }
 

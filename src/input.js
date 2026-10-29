@@ -5,6 +5,7 @@ let jumpWasHeld = false;
 let swordWasHeld = false;
 let waveWasHeld = false;
 let respawnWasHeld = false;
+let dashWasHeld = false;
 
 window.addEventListener("keydown", (event) => {
   held.add(event.code);
@@ -58,6 +59,13 @@ export function waveJustPressed() {
   const heldNow = held.has("KeyE");
   const pressed = heldNow && !waveWasHeld;
   waveWasHeld = heldNow;
+  return pressed;
+}
+
+export function dashJustPressed() {
+  const heldNow = held.has("KeyF");
+  const pressed = heldNow && !dashWasHeld;
+  dashWasHeld = heldNow;
   return pressed;
 }
 

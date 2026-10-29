@@ -36,13 +36,14 @@ martin-knight/
 ├── docs/                       # Domain-specific AI instructions & prompt guides
 │   ├── AGENTS_GAMEPLAY.md      # Rules for player physics, combat, and enemies
 │   ├── AGENTS_LEVELS.md        # Rules for level grids, platforms, and rooms
-│   └── AGENTS_GRAPHICS.md      # Rules for 60 FPS optimization & drawing
+│   ├── AGENTS_GRAPHICS.md      # Rules for 60 FPS optimization & drawing
+│   └── KEYS.md                 # Current key list. Update this when a key is added or changed.
 ├── assets/                     # Optional sprites and sounds (start with code-drawn shapes!)
 │   ├── sprites/
 │   └── audio/
 └── src/                        # Modular JavaScript files
     ├── main.js                 # Game loop (requestAnimationFrame) and state management
-    ├── input.js                # Keyboard listener (move: Arrow keys / WASD, jump: Space or W, sword: X or Z)
+    ├── input.js                # Keyboard listener. The key list is docs/KEYS.md.
     ├── player.js               # Hero movement, jumping, gravity, and sword slash
     ├── enemy.js                # Enemy types and patrol patterns
     ├── level.js                # 2D array tilemap and collision detection

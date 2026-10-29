@@ -1,32 +1,51 @@
-import { bounceBug, bugTouches, createBug, createFlyer, explodeAt, hitFlyer, respawnEnemy, updateBug, updateExplosions, updateFlyer, drawBug, drawExplosions, drawFlyer, drawEnemyHealth } from "./enemy.js?v=15";
-import { createLevel, drawLevel, findHighPlatform } from "./level.js?v=15";
-import { bouncePlayer, createPlayer, getAttackBox, getPlayerBox, getWaveBox, hurtPlayer, placePlayer, updatePlayer, drawPlayer, drawSlash, drawWave } from "./player.js?v=15";
-import { respawnJustPressed } from "./input.js?v=15";
-import { drawFps, drawHealth } from "./ui.js?v=15";
+import { bounceBug, bugTouches, createBug, createFlyer, createHopper, explodeAt, hitFlyer, respawnEnemy, updateBug, updateExplosions, updateFlyer, updateHopper, drawBug, drawExplosions, drawFlyer, drawHopper, drawEnemyHealth } from "./enemy.js?v=31";
+import { createBlankRoom, createClimbRoom, createLevel, drawLevel, findHighPlatform } from "./level.js?v=31";
+import { bouncePlayer, createPlayer, getAttackBox, getPlayerBox, getWaveBox, hurtPlayer, placePlayer, updatePlayer, drawPlayer, drawSlash, drawWave } from "./player.js?v=31";
+import { respawnJustPressed } from "./input.js?v=31";
+import { drawFps, drawHealth } from "./ui.js?v=31";
 
 const canvas = document.getElementById("game");
 // alpha: false keeps the canvas opaque, which is faster on this laptop.
 const ctx = canvas.getContext("2d", { alpha: false });
 
 let lastTime = 0;
-const level = createLevel();
-const player = createPlayer(level.spawnX, level.spawnFeetY);
+const cave = createLevel();
+const blankRoom = createBlankRoom();
+const climbRoom = createClimbRoom();
+let room = cave;
+const player = createPlayer(cave.spawnX, cave.spawnFeetY);
 const bugs = [];
 const flyers = [];
-for (const spot of level.enemies) {
+const hoppers = [];
+const blankFlyers = [];
+for (const spot of cave.enemies) {
   if (spot.kind === "flyer") {
     flyers.push(createFlyer(spot.x, spot.y));
   } else {
     bugs.push(createBug(spot.x, spot.feetY));
   }
 }
-const foes = bugs.concat(flyers);
+for (const spot of blankRoom.enemies) {
+  if (spot.kind === "hopper") {
+    const hopper = createHopper(spot.x, spot.feetY);
+    hopper.area = "blank";
+    hoppers.push(hopper);
+  } else if (spot.kind === "flyer") {
+    const flyer = createFlyer(spot.x, spot.y);
+    flyer.area = "blank";
+    blankFlyers.push(flyer);
+  }
+}
+const foes = bugs.concat(flyers, hoppers, blankFlyers);
 
 function drawCave() {
   ctx.fillStyle = "#0d1117";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // A slightly lighter wall behind the knight's path.
+  // The first room has a lighter wall. The blank room stays empty.
+  if (room !== cave) {
+    return;
+  }
   ctx.fillStyle = "#161b22";
   ctx.fillRect(36, 70, 728, 250);
 }
@@ -47,15 +66,46 @@ function frame(now) {
     }
   }
 
-  updatePlayer(player, level, canvas.width, deltaTime);
-  for (const bug of bugs) {
-    if (bug.health > 0) {
-      updateBug(bug, level, canvas.width, deltaTime);
+  updatePlayer(player, room, canvas.width, deltaTime);
+
+  const atRight = player.x + 22 >= canvas.width && player.vx > 0;
+  const atLeft = player.x <= 0 && player.vx < 0;
+  if (room === cave && atRight) {
+    room = blankRoom;
+    player.x = 0;
+  } else if (room === cave && atLeft) {
+    room = climbRoom;
+    player.x = canvas.width - 22;
+  } else if (room === blankRoom && atLeft) {
+    room = cave;
+    player.x = canvas.width - 22;
+  } else if (room === climbRoom && atRight) {
+    room = cave;
+    player.x = 0;
+  }
+
+  if (room === cave) {
+    for (const bug of bugs) {
+      if (bug.health > 0) {
+        updateBug(bug, cave, canvas.width, deltaTime);
+      }
+    }
+    for (const flyer of flyers) {
+      if (flyer.health > 0) {
+        updateFlyer(flyer, deltaTime);
+      }
     }
   }
-  for (const flyer of flyers) {
-    if (flyer.health > 0) {
-      updateFlyer(flyer, deltaTime);
+  if (room === blankRoom) {
+    for (const hopper of hoppers) {
+      if (hopper.health > 0) {
+        updateHopper(hopper, blankRoom, canvas.width, deltaTime);
+      }
+    }
+    for (const flyer of blankFlyers) {
+      if (flyer.health > 0) {
+        updateFlyer(flyer, deltaTime);
+      }
     }
   }
   updateExplosions(deltaTime);
@@ -64,7 +114,8 @@ function frame(now) {
   const slashBox = getAttackBox(player);
   const waveBox = getWaveBox(player);
   for (const bug of foes) {
-    if (bug.health <= 0) {
+    const inThisRoom = bug.area === "blank" ? room === blankRoom : room === cave;
+    if (!inThisRoom || bug.health <= 0) {
       continue;
     }
 
@@ -88,7 +139,7 @@ function frame(now) {
     if (waveHit) {
       player.waveHasHit = true;
       // A side attack still pushes the walking bug. A downward hit only bounces the knight.
-      if (!player.waveDown && bug.kind !== "flyer" && bug.health > 0) {
+      if (!player.waveDown && bug.kind !== "flyer" && bug.kind !== "hopper" && bug.health > 0) {
         bounceBug(bug, player.facing);
       }
     }
@@ -102,14 +153,15 @@ function frame(now) {
 
   // No circles left: stand on the tall stone and fill all 8 circles again.
   if (player.health === 0) {
-    const spot = findHighPlatform(level);
+    const spot = findHighPlatform(room);
     placePlayer(player, spot.centerX, spot.top);
     player.health = 8;
     player.hurtTimer = 0;
   }
 
   drawCave();
-  drawLevel(ctx, level);
+  drawLevel(ctx, room);
+  if (room === cave) {
   for (const bug of bugs) {
     if (bug.health <= 0) {
       continue;
@@ -123,6 +175,23 @@ function frame(now) {
     }
     drawFlyer(ctx, flyer);
     drawEnemyHealth(ctx, flyer);
+  }
+  }
+  if (room === blankRoom) {
+    for (const hopper of hoppers) {
+      if (hopper.health <= 0) {
+        continue;
+      }
+      drawHopper(ctx, hopper);
+      drawEnemyHealth(ctx, hopper);
+    }
+    for (const flyer of blankFlyers) {
+      if (flyer.health <= 0) {
+        continue;
+      }
+      drawFlyer(ctx, flyer);
+      drawEnemyHealth(ctx, flyer);
+    }
   }
   // Blink for a moment after a hit so the touch is easy to see.
   const blinking = player.hurtTimer > 0 && Math.floor(player.hurtTimer * 10) % 2 === 0;

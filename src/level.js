@@ -4,6 +4,7 @@
 // P = where the knight starts (put P in the air, just above the floor)
 // E = where a bug starts (put E in the air, just above the floor)
 // F = a flying enemy (it hovers in that spot, it does not drop to the floor)
+// H = a hopper (put H in the air, on the floor between two platforms)
 
 export const TILE_SIZE = 25;
 
@@ -28,8 +29,64 @@ const MAP = [
   "################################",
 ];
 
+// A second screen. Empty air, with a floor so the knight can stand.
+const BLANK = [
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  ".............F..............F...",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  "............###............###..",
+  "............###............###..",
+  "............###.....H......###..",
+  "################################",
+  "################################",
+];
+
 export function createLevel() {
-  const rows = MAP.map((row) => row.split(""));
+  return buildLevel(MAP);
+}
+
+export function createBlankRoom() {
+  return buildLevel(BLANK);
+}
+
+// A third screen, to the left of the cave. Stairs go up to the left.
+const CLIMB = [
+  "................................",
+  "................................",
+  "................................",
+  "................................",
+  ".######.........................",
+  ".######.........................",
+  "................................",
+  "..........####..................",
+  "..........####..................",
+  "................................",
+  ".................####...........",
+  ".................####...........",
+  "................................",
+  "........................####....",
+  "................................",
+  "................................",
+  "################################",
+  "################################",
+];
+
+export function createClimbRoom() {
+  return buildLevel(CLIMB);
+}
+
+function buildLevel(source) {
+  const rows = source.map((row) => row.split(""));
   let spawnX = 50;
   let spawnFeetY = 400;
   const enemies = [];
@@ -46,7 +103,7 @@ export function createLevel() {
         rows[row][col] = ".";
         continue;
       }
-      if (cell !== "P" && cell !== "E") {
+      if (cell !== "P" && cell !== "E" && cell !== "H") {
         continue;
       }
 
@@ -60,6 +117,8 @@ export function createLevel() {
       if (cell === "P") {
         spawnX = spot.x;
         spawnFeetY = spot.feetY;
+      } else if (cell === "H") {
+        enemies.push({ kind: "hopper", x: spot.x, feetY: spot.feetY });
       } else {
         enemies.push(spot);
       }
