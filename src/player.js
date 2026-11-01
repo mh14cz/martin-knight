@@ -1,5 +1,5 @@
-import { dashJustPressed, isLeftHeld, isRightHeld, isJumpHeld, isDownHeld, isUpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js?v=31";
-import { tilesTouching } from "./level.js?v=31";
+import { dashJustPressed, isLeftHeld, isRightHeld, isJumpHeld, isDownHeld, isUpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js?v=33";
+import { tilesTouching } from "./level.js?v=33";
 
 const PLAYER_WIDTH = 22;
 const PLAYER_HEIGHT = 36;
@@ -49,6 +49,7 @@ export function createPlayer(startX, groundY) {
     dashTimer: 0,
     dashCooldown: 0,
     dashDir: 1,
+    hopTimer: 0,
   };
 }
 
@@ -98,13 +99,26 @@ export function updatePlayer(player, level, canvasWidth, deltaTime) {
   const left = isLeftHeld();
   const right = isRightHeld();
 
-  if (dashJustPressed() && player.dashCooldown <= 0) {
+  // The entrance hop plays itself. Walking would cancel the little jump.
+  if (player.hopTimer > 0) {
+    player.hopTimer -= deltaTime;
+    if (player.onGround) {
+      player.hopTimer = 0;
+    }
+  }
+  const hopping = player.hopTimer > 0;
+
+  if (!hopping && dashJustPressed() && player.dashCooldown <= 0) {
     player.dashTimer = DASH_TIME;
     player.dashCooldown = DASH_COOLDOWN;
     player.dashDir = player.facing;
   }
 
-  if (player.dashTimer > 0) {
+  if (hopping) {
+    player.vx = 160;
+    player.facing = 1;
+    player.dashTimer = 0;
+  } else if (player.dashTimer > 0) {
     // Slide fast the way he is looking, then normal walking comes back.
     player.vx = player.dashDir * DASH_SPEED;
     player.facing = player.dashDir;
@@ -148,7 +162,7 @@ export function updatePlayer(player, level, canvasWidth, deltaTime) {
 
   // Letting go early cuts the climb, so a tap is a short hop.
   // A pogo bounce stays a full hop. A normal jump still gets shorter if he lets go.
-  if (player.vy < SHORT_HOP_SPEED && !isJumpHeld() && !player.pogo) {
+  if (!hopping && player.vy < SHORT_HOP_SPEED && !isJumpHeld() && !player.pogo) {
     player.vy = SHORT_HOP_SPEED;
   }
 

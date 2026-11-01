@@ -1,8 +1,8 @@
-import { bounceBug, bugTouches, createBug, createFlyer, createHopper, explodeAt, hitFlyer, respawnEnemy, updateBug, updateExplosions, updateFlyer, updateHopper, drawBug, drawExplosions, drawFlyer, drawHopper, drawEnemyHealth } from "./enemy.js?v=31";
-import { createBlankRoom, createClimbRoom, createLevel, drawLevel, findHighPlatform } from "./level.js?v=31";
-import { bouncePlayer, createPlayer, getAttackBox, getPlayerBox, getWaveBox, hurtPlayer, placePlayer, updatePlayer, drawPlayer, drawSlash, drawWave } from "./player.js?v=31";
-import { respawnJustPressed } from "./input.js?v=31";
-import { drawFps, drawHealth } from "./ui.js?v=31";
+import { bounceBug, bugTouches, createBug, createFlyer, createHopper, explodeAt, hitFlyer, respawnEnemy, updateBug, updateExplosions, updateFlyer, updateHopper, drawBug, drawExplosions, drawFlyer, drawHopper, drawEnemyHealth } from "./enemy.js?v=33";
+import { createBlankRoom, createClimbRoom, createLevel, createUpperRoom, drawLevel, findHighPlatform } from "./level.js?v=33";
+import { bouncePlayer, createPlayer, getAttackBox, getPlayerBox, getWaveBox, hurtPlayer, placePlayer, updatePlayer, drawPlayer, drawSlash, drawWave } from "./player.js?v=33";
+import { respawnJustPressed } from "./input.js?v=33";
+import { drawFps, drawHealth } from "./ui.js?v=33";
 
 const canvas = document.getElementById("game");
 // alpha: false keeps the canvas opaque, which is faster on this laptop.
@@ -12,6 +12,7 @@ let lastTime = 0;
 const cave = createLevel();
 const blankRoom = createBlankRoom();
 const climbRoom = createClimbRoom();
+const upperRoom = createUpperRoom();
 let room = cave;
 const player = createPlayer(cave.spawnX, cave.spawnFeetY);
 const bugs = [];
@@ -82,6 +83,22 @@ function frame(now) {
   } else if (room === climbRoom && atRight) {
     room = cave;
     player.x = 0;
+  } else if (room === climbRoom && player.y < 0 && player.vy < 0) {
+    room = upperRoom;
+    // Middle of the hole, already in the air, hopping toward the right edge.
+    player.x = 89;
+    player.y = 354;
+    player.vx = 160;
+    player.vy = -280;
+    player.facing = 1;
+    player.onGround = false;
+    player.hopTimer = 0.8;
+    player.dashTimer = 0;
+  } else if (room === upperRoom && player.y + 36 > canvas.height) {
+    room = climbRoom;
+    player.y = 4;
+    player.vy = 80;
+    player.hopTimer = 0;
   }
 
   if (room === cave) {
