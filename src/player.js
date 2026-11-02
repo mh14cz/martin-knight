@@ -1,5 +1,5 @@
-import { dashJustPressed, isLeftHeld, isRightHeld, isJumpHeld, isDownHeld, isUpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js?v=33";
-import { tilesTouching } from "./level.js?v=33";
+import { dashJustPressed, isLeftHeld, isRightHeld, isJumpHeld, isDownHeld, isUpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js?v=35";
+import { tilesTouching } from "./level.js?v=35";
 
 const PLAYER_WIDTH = 22;
 const PLAYER_HEIGHT = 36;
