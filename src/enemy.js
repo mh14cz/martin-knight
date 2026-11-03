@@ -1,4 +1,4 @@
-import { tilesTouching } from "./level.js?v=35";
+import { tilesTouching } from "./level.js?v=55";
 
 const BUG_WIDTH = 22;
 const BUG_HEIGHT = 16;

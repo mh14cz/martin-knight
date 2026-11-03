@@ -1,5 +1,5 @@
-import { dashJustPressed, isLeftHeld, isRightHeld, isJumpHeld, isDownHeld, isUpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js?v=35";
-import { tilesTouching } from "./level.js?v=35";
+import { dashJustPressed, isLeftHeld, isRightHeld, isJumpHeld, isDownHeld, isUpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js?v=55";
+import { tilesTouching } from "./level.js?v=55";
 
 const PLAYER_WIDTH = 22;
 const PLAYER_HEIGHT = 36;
@@ -50,6 +50,8 @@ export function createPlayer(startX, groundY) {
     dashCooldown: 0,
     dashDir: 1,
     hopTimer: 0,
+    // One extra jump. It refills when his feet touch the ground.
+    airJump: true,
   };
 }
 
@@ -60,6 +62,7 @@ export function placePlayer(player, centerX, feetY) {
   player.vy = 0;
   player.onGround = true;
   player.dashTimer = 0;
+  player.airJump = true;
 }
 
 export function getPlayerBox(player) {
@@ -91,6 +94,7 @@ export function bouncePlayer(player) {
 export function updatePlayer(player, level, canvasWidth, deltaTime) {
   if (player.onGround) {
     player.pogo = false;
+    player.airJump = true;
   }
   if (player.pogoSafe > 0) {
     player.pogoSafe -= deltaTime;
@@ -114,15 +118,18 @@ export function updatePlayer(player, level, canvasWidth, deltaTime) {
     player.dashDir = player.facing;
   }
 
+  let dashing = false;
   if (hopping) {
     player.vx = 160;
     player.facing = 1;
     player.dashTimer = 0;
   } else if (player.dashTimer > 0) {
-    // Slide fast the way he is looking, then normal walking comes back.
+    // Slide flat. He does not rise or fall until the dash is over.
     player.vx = player.dashDir * DASH_SPEED;
+    player.vy = 0;
     player.facing = player.dashDir;
     player.dashTimer -= deltaTime;
+    dashing = true;
   } else if (player.knockTimer > 0) {
     // A hit pushes him back for a short moment.
     player.vx = player.knockDir * KNOCKBACK_SPEED;
@@ -137,9 +144,16 @@ export function updatePlayer(player, level, canvasWidth, deltaTime) {
     player.vx = 0;
   }
 
-  if (jumpJustPressed() && player.onGround) {
+  // On the ground this is the first jump. In the air he has one more.
+  if (jumpJustPressed() && (player.onGround || player.airJump)) {
+    if (!player.onGround) {
+      player.airJump = false;
+    }
     player.vy = JUMP_SPEED;
     player.onGround = false;
+    // A jump cuts a dash short, so the extra jump still goes up.
+    player.dashTimer = 0;
+    dashing = false;
   }
 
   const attackDown = !player.onGround && isDownHeld();
@@ -167,7 +181,11 @@ export function updatePlayer(player, level, canvasWidth, deltaTime) {
   }
 
   moveX(player, level, deltaTime);
-  moveY(player, level, deltaTime);
+  if (dashing) {
+    player.vy = 0;
+  } else {
+    moveY(player, level, deltaTime);
+  }
   keepInsideScreen(player, canvasWidth);
   hitStoneWithSlash(player, level);
 

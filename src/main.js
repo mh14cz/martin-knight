@@ -1,8 +1,8 @@
-import { bounceBug, bugTouches, createBug, createFlyer, createHopper, explodeAt, hitFlyer, respawnEnemy, updateBug, updateExplosions, updateFlyer, updateHopper, drawBug, drawExplosions, drawFlyer, drawHopper, drawEnemyHealth } from "./enemy.js?v=35";
-import { createBlankRoom, createClimbRoom, createLevel, createRightRoom, createUpperRoom, drawLevel, findHighPlatform } from "./level.js?v=35";
-import { bouncePlayer, createPlayer, getAttackBox, getPlayerBox, getWaveBox, hurtPlayer, placePlayer, updatePlayer, drawPlayer, drawSlash, drawWave } from "./player.js?v=35";
-import { respawnJustPressed } from "./input.js?v=35";
-import { drawFps, drawHealth } from "./ui.js?v=35";
+import { bounceBug, bugTouches, createBug, createFlyer, createHopper, explodeAt, hitFlyer, respawnEnemy, updateBug, updateExplosions, updateFlyer, updateHopper, drawBug, drawExplosions, drawFlyer, drawHopper, drawEnemyHealth } from "./enemy.js?v=55";
+import { createBlankRoom, createClimbRoom, createLevel, createRightRoom, createUpperRoom, drawLevel, findHighPlatform, touchesSpike } from "./level.js?v=55";
+import { bouncePlayer, createPlayer, getAttackBox, getPlayerBox, getWaveBox, hurtPlayer, placePlayer, updatePlayer, drawPlayer, drawSlash, drawWave } from "./player.js?v=55";
+import { respawnJustPressed } from "./input.js?v=55";
+import { drawFps, drawHealth } from "./ui.js?v=55";
 
 const canvas = document.getElementById("game");
 // alpha: false keeps the canvas opaque, which is faster on this laptop.
@@ -100,7 +100,8 @@ function frame(now) {
     player.x = 0;
   } else if (room === rightRoom && atLeft) {
     room = upperRoom;
-    player.x = canvas.width - 22;
+    // The right edge is a wall. Come back standing on top of it.
+    placePlayer(player, 775, 275);
   } else if (room === upperRoom && player.y + 36 > canvas.height) {
     room = climbRoom;
     player.y = 4;
@@ -135,6 +136,9 @@ function frame(now) {
   updateExplosions(deltaTime);
 
   const playerBox = getPlayerBox(player);
+  if (touchesSpike(room, playerBox)) {
+    hurtPlayer(player);
+  }
   const slashBox = getAttackBox(player);
   const waveBox = getWaveBox(player);
   for (const bug of foes) {

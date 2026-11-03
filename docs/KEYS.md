@@ -8,12 +8,12 @@ When a new key is added, or an old key starts doing something different, update 
 | --- | --- |
 | Left Arrow or A | Walk left. The knight faces left. |
 | Right Arrow or D | Walk right. The knight faces right. |
-| Space | Jump. Hold it for a higher jump. Tap it for a short hop. |
-| W | Jump, the same as Space. If you hold W and press E, the E attack points up. This works on the ground and in the air. |
+| Space | Jump. Hold it for a higher jump. Tap it for a short hop. In the air, press it once more for a second jump. |
+| W | Jump, the same as Space, including the second jump in the air. If you hold W and press E, the E attack points up. This works on the ground and in the air. |
 | S or Down Arrow | In the air, hold this while attacking to aim the attack down. On the ground, the attack still points forward. |
 | X or Z | Sword slash. See the attack table below. |
 | E | Half-circle attack. See the attack table below. |
-| F | Dash in the direction the knight is facing. It works on the ground and in the air. He must wait a short moment before he can dash again. |
+| F | Dash in a straight line the way the knight is facing. He does not fall during the dash. It works on the ground and in the air. He must wait a short moment before he can dash again. |
 | Q | Put every enemy back at its starting spot and refill its health bar. |
 
 ## X or Z, and E
