@@ -1,5 +1,5 @@
-import { dashJustPressed, isLeftHeld, isRightHeld, isJumpHeld, isDownHeld, isUpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js?v=55";
-import { tilesTouching } from "./level.js?v=55";
+import { dashJustPressed, isLeftHeld, isRightHeld, isJumpHeld, isDownHeld, isUpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js?v=86";
+import { tilesTouching } from "./level.js?v=86";
 
 const PLAYER_WIDTH = 22;
 const PLAYER_HEIGHT = 36;
@@ -43,6 +43,8 @@ export function createPlayer(startX, groundY) {
     knockTimer: 0,
     knockDir: 0,
     health: 8,
+    // Fills when a sword or wave hits an enemy. 10 means the meter is full.
+    special: 0,
     hurtTimer: 0,
     pogo: false,
     pogoSafe: 0,
@@ -52,6 +54,10 @@ export function createPlayer(startX, groundY) {
     hopTimer: 0,
     // One extra jump. It refills when his feet touch the ground.
     airJump: true,
+    // How long the left mouse has been held toward the next heart.
+    healHold: 0,
+    // How long the white burst stays after a heart comes back.
+    healFlash: 0,
   };
 }
 
@@ -63,6 +69,8 @@ export function placePlayer(player, centerX, feetY) {
   player.onGround = true;
   player.dashTimer = 0;
   player.airJump = true;
+  player.healHold = 0;
+  player.healFlash = 0;
 }
 
 export function getPlayerBox(player) {
@@ -72,6 +80,32 @@ export function getPlayerBox(player) {
     width: PLAYER_WIDTH,
     height: PLAYER_HEIGHT,
   };
+}
+
+// Hold the left mouse for this long to gain one heart. Each heart spends 1 special.
+const HEAL_TIME = 0.5;
+// The burst after a heart comes back.
+const HEAL_FLASH = 0.25;
+// Little squares that spin inward. Drawn fresh each frame, so nothing is stored.
+const HEAL_BITS = 6;
+
+// Healing only runs while the plus is white, he is hurt, and the button stays down.
+export function updateHeal(player, holding, deltaTime) {
+  if (player.healFlash > 0) {
+    player.healFlash -= deltaTime;
+  }
+  const canHeal = holding && player.special >= 1 && player.health > 0 && player.health < 8;
+  if (!canHeal) {
+    player.healHold = 0;
+    return;
+  }
+  player.healHold += deltaTime;
+  if (player.healHold >= HEAL_TIME) {
+    player.healHold = 0;
+    player.health += 1;
+    player.special -= 1;
+    player.healFlash = HEAL_FLASH;
+  }
 }
 
 // One touch takes one circle. The timer stops the next hit for a moment.
@@ -465,5 +499,72 @@ export function drawSlash(ctx, player) {
     ctx.arc(16, 0, 14, -1.1, 1.1);
   }
   ctx.stroke();
+  ctx.restore();
+}
+
+// Soul gathers around the knight, then bursts out when a heart comes back.
+export function drawHeal(ctx, player) {
+  const gathering = player.healHold > 0;
+  const bursting = player.healFlash > 0;
+  if (!gathering && !bursting) {
+    return;
+  }
+
+  const cx = player.x + PLAYER_WIDTH / 2;
+  const cy = player.y + 16;
+  ctx.save();
+  ctx.strokeStyle = "#ffffff";
+  ctx.fillStyle = "#ffffff";
+  ctx.lineWidth = 2;
+
+  if (gathering) {
+    const t = player.healHold / HEAL_TIME;
+    const spin = player.healHold * 16;
+    ctx.globalAlpha = 0.45 + t * 0.45;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 16, 22 - t * 6, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    for (let i = 0; i < HEAL_BITS; i += 1) {
+      const angle = spin + (i / HEAL_BITS) * Math.PI * 2;
+      const reach = 26 - t * 14;
+      const px = cx + Math.cos(angle) * reach;
+      const py = cy + Math.sin(angle) * reach * 0.75;
+      ctx.fillRect(px - 2, py - 2, 4, 4);
+    }
+  }
+
+  if (bursting) {
+    const k = player.healFlash / HEAL_FLASH;
+    ctx.globalAlpha = Math.max(k, 0);
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 12 + (1 - k) * 22, 14 + (1 - k) * 26, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// How long the ball grows above the knight before it flies.
+export const BALL_CHARGE = 0.5;
+
+// A white ball grows in place, with a ring spinning around it.
+export function drawBallCharge(ctx, x, y, timeLeft) {
+  if (timeLeft <= 0) {
+    return;
+  }
+  const t = 1 - timeLeft / BALL_CHARGE;
+  ctx.save();
+  ctx.strokeStyle = "#ffffff";
+  ctx.fillStyle = "#ffffff";
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.9;
+  ctx.beginPath();
+  ctx.arc(x, y, 12 - t * 4, t * 10, t * 10 + Math.PI * 1.5);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.beginPath();
+  ctx.arc(x, y, 2 + t * 6, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 }

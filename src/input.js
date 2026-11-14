@@ -6,6 +6,10 @@ let swordWasHeld = false;
 let waveWasHeld = false;
 let respawnWasHeld = false;
 let dashWasHeld = false;
+let mouseDown = false;
+let mouseWasDown = false;
+let rightMouseDown = false;
+let rightMouseWasDown = false;
 
 window.addEventListener("keydown", (event) => {
   held.add(event.code);
@@ -18,6 +22,29 @@ window.addEventListener("keydown", (event) => {
 
 window.addEventListener("keyup", (event) => {
   held.delete(event.code);
+});
+
+window.addEventListener("mousedown", (event) => {
+  if (event.button === 0) {
+    mouseDown = true;
+  }
+  if (event.button === 2) {
+    rightMouseDown = true;
+  }
+});
+
+window.addEventListener("mouseup", (event) => {
+  if (event.button === 0) {
+    mouseDown = false;
+  }
+  if (event.button === 2) {
+    rightMouseDown = false;
+  }
+});
+
+// A right click would open a menu on top of the game. Keep it for lightning.
+window.addEventListener("contextmenu", (event) => {
+  event.preventDefault();
 });
 
 export function isLeftHeld() {
@@ -74,4 +101,30 @@ export function respawnJustPressed() {
   const pressed = heldNow && !respawnWasHeld;
   respawnWasHeld = heldNow;
   return pressed;
+}
+
+// True only on the frame the right mouse button goes down.
+export function lightningJustPressed() {
+  const pressed = rightMouseDown && !rightMouseWasDown;
+  rightMouseWasDown = rightMouseDown;
+  return pressed;
+}
+
+// True the whole time the left mouse button is held down.
+export function isLeftMouseHeld() {
+  return mouseDown;
+}
+
+// True only on the frame the left mouse button goes down.
+export function leftClickJustPressed() {
+  const pressed = mouseDown && !mouseWasDown;
+  mouseWasDown = mouseDown;
+  return pressed;
+}
+
+// A click is a short press. A longer hold is for healing, not the ball.
+export const BALL_CLICK = 0.3;
+
+export function isQuickClick(heldSeconds) {
+  return heldSeconds > 0 && heldSeconds < BALL_CLICK;
 }

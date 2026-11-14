@@ -14,6 +14,8 @@ When a new key is added, or an old key starts doing something different, update 
 | X or Z | Sword slash. See the attack table below. |
 | E | Half-circle attack. See the attack table below. |
 | F | Dash in a straight line the way the knight is facing. He does not fall during the dash. It works on the ground and in the air. He must wait a short moment before he can dash again. |
+| Right mouse | When the special meter is full, every enemy in the room gets a white mark for half a second. Then a white lightning bolt hits each marked enemy. Each enemy loses one health. This hit does not charge the meter, and the meter goes empty. |
+| Left mouse | A quick click, when the second circle is white (the meter has 5 or more), spends 5 points and charges a white ball above the knight for half a second. Then the ball flies to the nearest enemy. That enemy loses one health. The hit does not charge the meter. Holding the button does not shoot the ball. Hold it while the plus circle is white (the meter has 1 or more) and the knight is missing health. After a short moment he gains one heart, and the meter loses 1. Keep holding to heal another heart. |
 | Q | Put every enemy back at its starting spot and refill its health bar. |
 
 ## X or Z, and E

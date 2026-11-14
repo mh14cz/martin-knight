@@ -1,4 +1,4 @@
-import { tilesTouching } from "./level.js?v=55";
+import { tilesTouching } from "./level.js?v=86";
 
 const BUG_WIDTH = 22;
 const BUG_HEIGHT = 16;
@@ -439,5 +439,28 @@ export function drawHopper(ctx, hopper) {
   ctx.fillStyle = "#10210f";
   ctx.fillRect(3, -3, 3, 3);
 
+  ctx.restore();
+}
+
+// How long a white ring sits on each enemy before the lightning hits.
+export const LIGHTNING_MARK = 0.5;
+
+// A ring tightens around one enemy. It is drawn fresh each frame.
+export function drawLightningMark(ctx, x, y, timeLeft) {
+  if (timeLeft <= 0) {
+    return;
+  }
+  const t = 1 - timeLeft / LIGHTNING_MARK;
+  ctx.save();
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(x, y, 18 - t * 6, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x - 4, y - 16);
+  ctx.lineTo(x, y - 22);
+  ctx.lineTo(x + 4, y - 16);
+  ctx.stroke();
   ctx.restore();
 }
