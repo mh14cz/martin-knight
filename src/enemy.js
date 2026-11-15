@@ -1,4 +1,4 @@
-import { tilesTouching } from "./level.js?v=86";
+import { tilesTouching } from "./level.js?v=104";
 
 const BUG_WIDTH = 22;
 const BUG_HEIGHT = 16;
@@ -15,8 +15,8 @@ export function createBug(startX, feetY) {
     vx: BUG_SPEED,
     facing: 1,
     bounceTimer: 0,
-    health: 2,
-    maxHealth: 2,
+    health: 4,
+    maxHealth: 4,
   };
 }
 

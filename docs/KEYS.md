@@ -11,7 +11,7 @@ When a new key is added, or an old key starts doing something different, update 
 | Space | Jump. Hold it for a higher jump. Tap it for a short hop. In the air, press it once more for a second jump. |
 | W | Jump, the same as Space, including the second jump in the air. If you hold W and press E, the E attack points up. This works on the ground and in the air. |
 | S or Down Arrow | In the air, hold this while attacking to aim the attack down. On the ground, the attack still points forward. |
-| X or Z | Sword slash. See the attack table below. |
+| X or Z | Sword slash. See the attack table below. After you pick up the sword from the chest, he swings that longer gold sword. |
 | E | Half-circle attack. See the attack table below. |
 | F | Dash in a straight line the way the knight is facing. He does not fall during the dash. It works on the ground and in the air. He must wait a short moment before he can dash again. |
 | Right mouse | When the special meter is full, every enemy in the room gets a white mark for half a second. Then a white lightning bolt hits each marked enemy. Each enemy loses one health. This hit does not charge the meter, and the meter goes empty. |
@@ -22,13 +22,13 @@ When a new key is added, or an old key starts doing something different, update 
 
 | | X or Z | E |
 | --- | --- | --- |
-| Shape | A small curve | A half circle |
+| Shape | A small curve. The chest sword is a swing with a thick gray part and a thin yellow edge. | A half circle. After the chest sword, it is the same gray and yellow swing. |
 | How long you see it | A quick flash (0.15 seconds) | Half a second |
 | Wait before the next one | A short wait (0.4 seconds) | You can press it again right away |
 | Normal direction | Forward | Forward |
 | Hold S in the air | Points down | Points down |
 | Hold W | Still a normal slash | Points up, on the ground or in the air |
-| Hit an enemy | Takes one health block | Takes one health block |
+| Hit an enemy | Takes one health block. The chest sword takes two. | Takes one health block. The chest sword takes two. |
 | Hit the crawling bug from the side | He does not get pushed | He bounces away, but does not turn around |
 | Downward hit | The knight bounces up | The knight bounces up, and the bug is not pushed |
 

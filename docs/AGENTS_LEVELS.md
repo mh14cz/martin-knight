@@ -7,6 +7,9 @@ When building levels, platforms, or hazards:
      - `.` = Empty air
      - `#` = Solid stone wall/floor
      - `^` = Spikes (hazard)
+     - `s` = Switch, off. `S` = that switch turned on. Not solid.
+     - `T` = Closed trap door. `t` = that door open. Not solid while open.
+     - `c` = Closed chest. `C` = that chest opened by a hit. Not solid.
      - `E` = Enemy spawn point
      - `P` = Player start
 2. **Collision Detection:**

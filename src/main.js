@@ -1,8 +1,8 @@
-import { bounceBug, bugTouches, createBug, createFlyer, createHopper, explodeAt, hitFlyer, respawnEnemy, updateBug, updateExplosions, updateFlyer, updateHopper, drawBug, drawExplosions, drawFlyer, drawHopper, drawEnemyHealth, drawLightningMark, LIGHTNING_MARK } from "./enemy.js?v=86";
-import { createBlankRoom, createClimbRoom, createLevel, createRightRoom, createUpperRoom, drawLevel, findHighPlatform, touchesSpike } from "./level.js?v=86";
-import { BALL_CHARGE, bouncePlayer, createPlayer, getAttackBox, getPlayerBox, getWaveBox, hurtPlayer, placePlayer, updateHeal, updatePlayer, drawBallCharge, drawHeal, drawPlayer, drawSlash, drawWave } from "./player.js?v=86";
-import { isLeftMouseHeld, isQuickClick, lightningJustPressed, respawnJustPressed } from "./input.js?v=86";
-import { chargeSpecial, drawFps, drawHealth, drawSpecial, SPECIAL_MAX } from "./ui.js?v=86";
+import { bounceBug, bugTouches, createBug, createFlyer, createHopper, explodeAt, hitFlyer, respawnEnemy, updateBug, updateExplosions, updateFlyer, updateHopper, drawBug, drawExplosions, drawFlyer, drawHopper, drawEnemyHealth, drawLightningMark, LIGHTNING_MARK } from "./enemy.js?v=104";
+import { createBlankRoom, createClimbRoom, createLevel, createRightRoom, createUpperRoom, drawLevel, findHighPlatform, hitChest, touchesSpike, useSwitch } from "./level.js?v=104";
+import { BALL_CHARGE, bouncePlayer, createPlayer, getAttackBox, getPlayerBox, getWaveBox, hurtPlayer, placePlayer, updateHeal, updatePlayer, drawBallCharge, drawHeal, drawPlayer, drawSlash, drawSwordItem, drawWave } from "./player.js?v=104";
+import { isLeftMouseHeld, isQuickClick, lightningJustPressed, respawnJustPressed } from "./input.js?v=104";
+import { chargeSpecial, drawFps, drawHealth, drawSpecial, SPECIAL_MAX } from "./ui.js?v=104";
 
 const canvas = document.getElementById("game");
 // alpha: false keeps the canvas opaque, which is faster on this laptop.
@@ -45,6 +45,7 @@ let lightningTimer = 0;
 let lightningMark = null;
 let soulBall = null;
 let ballCharge = null;
+let swordItem = null;
 let mouseHold = 0;
 let sawMouseHold = false;
 const BALL_SPEED = 480;
@@ -187,6 +188,14 @@ function frame(now) {
     player.y = 4;
     player.vy = 80;
     player.hopTimer = 0;
+  } else if (room === rightRoom && player.y + 36 > canvas.height) {
+    room = cave;
+    // Drop into the box above the first flyer.
+    player.x = 376;
+    player.y = 4;
+    player.vx = 0;
+    player.vy = 80;
+    player.hopTimer = 0;
   }
 
   // Coming back into a room puts its enemies back at full health.
@@ -325,11 +334,37 @@ function frame(now) {
   updateHeal(player, isLeftMouseHeld(), deltaTime);
 
   const playerBox = getPlayerBox(player);
+  useSwitch(room, playerBox);
   if (touchesSpike(room, playerBox)) {
     hurtPlayer(player);
   }
   const slashBox = getAttackBox(player);
   const waveBox = getWaveBox(player);
+  const popped = hitChest(room, [slashBox, waveBox]);
+  if (popped) {
+    swordItem = { x: popped.x, y: popped.y, restY: popped.restY, vy: -360, age: 0 };
+  }
+  if (swordItem) {
+    swordItem.age += deltaTime;
+    if (swordItem.vy !== 0 || swordItem.y < swordItem.restY) {
+      swordItem.vy += 900 * deltaTime;
+      swordItem.y += swordItem.vy * deltaTime;
+      if (swordItem.y >= swordItem.restY && swordItem.vy > 0) {
+        swordItem.y = swordItem.restY;
+        swordItem.vy = 0;
+      }
+    }
+    // Wait until the pop finishes, so the sword stays visible above the chest.
+    const swordBox = { x: swordItem.x - 10, y: swordItem.y - 26, width: 20, height: 44 };
+    const touchingSword = playerBox.x < swordBox.x + swordBox.width
+      && playerBox.x + playerBox.width > swordBox.x
+      && playerBox.y < swordBox.y + swordBox.height
+      && playerBox.y + playerBox.height > swordBox.y;
+    if (room === cave && swordItem.vy === 0 && touchingSword) {
+      player.goldSword = true;
+      swordItem = null;
+    }
+  }
   for (const bug of foes) {
     const inThisRoom = bug.area === "blank" ? room === blankRoom : room === cave;
     if (!inThisRoom || bug.health <= 0) {
@@ -345,7 +380,8 @@ function frame(now) {
       bouncePlayer(player);
     }
     if (slashHit || waveHit) {
-      bug.health -= 1;
+      // The chest sword hits harder. The old sword still takes one.
+      bug.health -= player.goldSword ? 2 : 1;
       chargeSpecial(player);
       if (bug.health <= 0) {
         explodeAt(bug.x + 11, bug.y + 8);
@@ -421,6 +457,9 @@ function frame(now) {
   drawWave(ctx, player);
   drawLightning();
   drawSoulBall();
+  if (room === cave && swordItem) {
+    drawSwordItem(ctx, swordItem);
+  }
   drawHeal(ctx, player);
   drawHealth(ctx, canvas.width, player.health);
   drawSpecial(ctx, canvas.width, player.special);

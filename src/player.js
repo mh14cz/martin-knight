@@ -1,5 +1,5 @@
-import { dashJustPressed, isLeftHeld, isRightHeld, isJumpHeld, isDownHeld, isUpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js?v=86";
-import { tilesTouching } from "./level.js?v=86";
+import { dashJustPressed, isLeftHeld, isRightHeld, isJumpHeld, isDownHeld, isUpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js?v=104";
+import { tilesTouching } from "./level.js?v=104";
 
 const PLAYER_WIDTH = 22;
 const PLAYER_HEIGHT = 36;
@@ -58,6 +58,8 @@ export function createPlayer(startX, groundY) {
     healHold: 0,
     // How long the white burst stays after a heart comes back.
     healFlash: 0,
+    // True after he picks up the sword from the chest.
+    goldSword: false,
   };
 }
 
@@ -351,7 +353,7 @@ export function getAttackBox(player) {
     };
   }
 
-  const width = 26;
+  const width = player.goldSword ? 36 : 26;
   const height = 18;
   return {
     x: player.facing > 0 ? player.x + PLAYER_WIDTH - 4 : player.x - width + 4,
@@ -455,6 +457,14 @@ export function drawWave(ctx, player) {
     return;
   }
 
+  if (player.goldSword) {
+    const swung = WAVE_TIME - player.waveTimer;
+    const swing = Math.min(1, Math.max(0, swung / SLASH_TIME));
+    const aim = player.waveDown ? "down" : player.waveUp ? "up" : "side";
+    drawGoldSwing(ctx, player, swing, aim);
+    return;
+  }
+
   ctx.save();
   ctx.strokeStyle = "#e6edf3";
   ctx.lineWidth = 3;
@@ -484,6 +494,12 @@ export function drawSlash(ctx, player) {
     return;
   }
 
+  if (player.goldSword) {
+    const swing = Math.min(1, Math.max(0, 1 - player.slashTimer / SLASH_TIME));
+    drawGoldSwing(ctx, player, swing, player.slashDown ? "down" : "side");
+    return;
+  }
+
   ctx.save();
   ctx.strokeStyle = "#e6edf3";
   ctx.lineWidth = 3;
@@ -499,6 +515,66 @@ export function drawSlash(ctx, player) {
     ctx.arc(16, 0, 14, -1.1, 1.1);
   }
   ctx.stroke();
+  ctx.restore();
+}
+
+// Blade points up. The hand holds the sword near the guard.
+function drawHeldSword(ctx) {
+  ctx.fillStyle = "#e6edf3";
+  ctx.fillRect(-3, -26, 6, 28);
+  ctx.fillStyle = "#e6c35c";
+  ctx.fillRect(-10, 0, 20, 4);
+  ctx.fillStyle = "#6b4423";
+  ctx.fillRect(-2, 4, 4, 8);
+  ctx.fillStyle = "#e6c35c";
+  ctx.fillRect(-4, 12, 8, 3);
+}
+
+// The chest sword sweeps through the attack: thick gray, thin yellow edge.
+function drawGoldSwing(ctx, player, swing, aim) {
+  const angle = -0.6 + 2.6 * swing;
+
+  ctx.save();
+  if (aim === "down") {
+    ctx.translate(player.x + PLAYER_WIDTH / 2, player.y + PLAYER_HEIGHT - 6);
+    ctx.rotate(Math.PI / 2);
+  } else if (aim === "up") {
+    ctx.translate(player.x + PLAYER_WIDTH / 2, player.y + 10);
+    ctx.rotate(-Math.PI / 2);
+  } else {
+    ctx.translate(player.x + PLAYER_WIDTH / 2, player.y + 18);
+    ctx.scale(player.facing, 1);
+  }
+
+  // Thick gray swoosh, with a thin yellow edge on the outside.
+  const arcStart = -0.6 - Math.PI / 2;
+  const arcEnd = angle - Math.PI / 2;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.strokeStyle = "#9aa0a6";
+  ctx.lineWidth = 8;
+  ctx.arc(0, 0, 28, arcStart, arcEnd);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.strokeStyle = "#ffe14a";
+  ctx.lineWidth = 2;
+  ctx.arc(0, 0, 33, arcStart, arcEnd);
+  ctx.stroke();
+
+  ctx.save();
+  ctx.rotate(angle);
+  ctx.translate(0, -8);
+  drawHeldSword(ctx);
+  ctx.restore();
+  ctx.restore();
+}
+
+// The sword that pops out of the chest. The blade points up.
+export function drawSwordItem(ctx, item) {
+  const bob = item.vy === 0 ? Math.sin(item.age * 5) * 3 : 0;
+  ctx.save();
+  ctx.translate(item.x, item.y + bob);
+  drawHeldSword(ctx);
   ctx.restore();
 }
 
