@@ -1,4 +1,4 @@
-import { tilesTouching } from "./level.js?v=104";
+import { tilesTouching } from "./level.js?v=105";
 
 const BUG_WIDTH = 22;
 const BUG_HEIGHT = 16;
@@ -51,6 +51,16 @@ export function updateBug(bug, level, canvasWidth, deltaTime) {
   }
 
   bug.x += bug.vx * deltaTime;
+
+  // The left edge of the screen sends the bug back toward the stone.
+  if (bug.x <= 0) {
+    bug.x = 0;
+    if (bug.bounceTimer > 0) {
+      bug.vx = 0;
+    } else {
+      turn(bug, 1);
+    }
+  }
 
   // The right edge of the screen sends the bug back toward the stone.
   if (bug.x + BUG_WIDTH >= canvasWidth) {

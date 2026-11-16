@@ -1,8 +1,8 @@
-import { bounceBug, bugTouches, createBug, createFlyer, createHopper, explodeAt, hitFlyer, respawnEnemy, updateBug, updateExplosions, updateFlyer, updateHopper, drawBug, drawExplosions, drawFlyer, drawHopper, drawEnemyHealth, drawLightningMark, LIGHTNING_MARK } from "./enemy.js?v=104";
-import { createBlankRoom, createClimbRoom, createLevel, createRightRoom, createUpperRoom, drawLevel, findHighPlatform, hitChest, touchesSpike, useSwitch } from "./level.js?v=104";
-import { BALL_CHARGE, bouncePlayer, createPlayer, getAttackBox, getPlayerBox, getWaveBox, hurtPlayer, placePlayer, updateHeal, updatePlayer, drawBallCharge, drawHeal, drawPlayer, drawSlash, drawSwordItem, drawWave } from "./player.js?v=104";
-import { isLeftMouseHeld, isQuickClick, lightningJustPressed, respawnJustPressed } from "./input.js?v=104";
-import { chargeSpecial, drawFps, drawHealth, drawSpecial, SPECIAL_MAX } from "./ui.js?v=104";
+import { bounceBug, bugTouches, createBug, createFlyer, createHopper, explodeAt, hitFlyer, respawnEnemy, updateBug, updateExplosions, updateFlyer, updateHopper, drawBug, drawExplosions, drawFlyer, drawHopper, drawEnemyHealth, drawLightningMark, LIGHTNING_MARK } from "./enemy.js?v=105";
+import { createBlankRoom, createClimbRoom, createLevel, createRightRoom, createUpperRoom, drawLevel, findHighPlatform, hitChest, touchesSpike, useSwitch } from "./level.js?v=105";
+import { BALL_CHARGE, bouncePlayer, createPlayer, getAttackBox, getPlayerBox, getWaveBox, hurtPlayer, placePlayer, updateHeal, updatePlayer, drawBallCharge, drawHeal, drawPlayer, drawSlash, drawSwordItem, drawWave } from "./player.js?v=105";
+import { isLeftMouseHeld, isQuickClick, lightningJustPressed, respawnJustPressed } from "./input.js?v=105";
+import { chargeSpecial, drawFps, drawHealth, drawSpecial, SPECIAL_MAX } from "./ui.js?v=105";
 
 const canvas = document.getElementById("game");
 // alpha: false keeps the canvas opaque, which is faster on this laptop.
@@ -340,7 +340,8 @@ function frame(now) {
   }
   const slashBox = getAttackBox(player);
   const waveBox = getWaveBox(player);
-  const popped = hitChest(room, [slashBox, waveBox]);
+  // The sword from the chest only appears in the cave, so only that chest can open.
+  const popped = room === cave ? hitChest(room, [slashBox, waveBox]) : null;
   if (popped) {
     swordItem = { x: popped.x, y: popped.y, restY: popped.restY, vy: -360, age: 0 };
   }
@@ -416,20 +417,20 @@ function frame(now) {
   drawCave();
   drawLevel(ctx, room);
   if (room === cave) {
-  for (const bug of bugs) {
-    if (bug.health <= 0) {
-      continue;
+    for (const bug of bugs) {
+      if (bug.health <= 0) {
+        continue;
+      }
+      drawBug(ctx, bug);
+      drawEnemyHealth(ctx, bug);
     }
-    drawBug(ctx, bug);
-    drawEnemyHealth(ctx, bug);
-  }
-  for (const flyer of flyers) {
-    if (flyer.health <= 0) {
-      continue;
+    for (const flyer of flyers) {
+      if (flyer.health <= 0) {
+        continue;
+      }
+      drawFlyer(ctx, flyer);
+      drawEnemyHealth(ctx, flyer);
     }
-    drawFlyer(ctx, flyer);
-    drawEnemyHealth(ctx, flyer);
-  }
   }
   if (room === blankRoom) {
     for (const hopper of hoppers) {

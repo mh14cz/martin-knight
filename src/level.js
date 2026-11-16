@@ -274,10 +274,11 @@ export function touchesSpike(level, box) {
       if (col < 0 || col >= line.length || line[col] !== "^") {
         continue;
       }
-      // The tips start a little above the floor, so a jump can clear them.
+      // Floor tips start a little above the ground. Ceiling tips stop a little below the stone.
+      const pointingDown = isSolid(level, col, row - 1);
       const tooth = {
         x: col * TILE_SIZE + 3,
-        y: row * TILE_SIZE + 8,
+        y: row * TILE_SIZE + (pointingDown ? 0 : 8),
         width: TILE_SIZE - 6,
         height: TILE_SIZE - 8,
       };

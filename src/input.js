@@ -7,7 +7,6 @@ let waveWasHeld = false;
 let respawnWasHeld = false;
 let dashWasHeld = false;
 let mouseDown = false;
-let mouseWasDown = false;
 let rightMouseDown = false;
 let rightMouseWasDown = false;
 
@@ -46,6 +45,21 @@ window.addEventListener("mouseup", (event) => {
 window.addEventListener("contextmenu", (event) => {
   event.preventDefault();
 });
+
+// Switching windows can skip the key-up. Forget every held key and mouse button.
+function releaseControls() {
+  held.clear();
+  mouseDown = false;
+  rightMouseDown = false;
+  jumpWasHeld = false;
+  swordWasHeld = false;
+  waveWasHeld = false;
+  respawnWasHeld = false;
+  dashWasHeld = false;
+  rightMouseWasDown = false;
+}
+
+window.addEventListener("blur", releaseControls);
 
 export function isLeftHeld() {
   return held.has("ArrowLeft") || held.has("KeyA");
@@ -113,13 +127,6 @@ export function lightningJustPressed() {
 // True the whole time the left mouse button is held down.
 export function isLeftMouseHeld() {
   return mouseDown;
-}
-
-// True only on the frame the left mouse button goes down.
-export function leftClickJustPressed() {
-  const pressed = mouseDown && !mouseWasDown;
-  mouseWasDown = mouseDown;
-  return pressed;
 }
 
 // A click is a short press. A longer hold is for healing, not the ball.
