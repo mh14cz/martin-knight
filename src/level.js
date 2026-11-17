@@ -8,6 +8,7 @@
 // ^ = spikes (they hurt, but the knight can jump over them)
 // s = a switch (not solid). S means that same switch is on.
 // T = a closed trap door. t means that door is open.
+// D = a big stone door. It is solid.
 // c = a closed chest. C means that chest is open.
 
 export const TILE_SIZE = 25;
@@ -64,6 +65,7 @@ export function createBlankRoom() {
 }
 
 // A third screen, to the left of the cave. Stairs go up to the left.
+// The wall under the high platform stays closed. The stone door sits on the floor, against the left edge.
 const CLIMB = [
   "................................",
   "................................",
@@ -75,12 +77,12 @@ const CLIMB = [
   "..........####..................",
   "..........####..................",
   "................................",
-  ".................####...........",
-  ".................####...........",
-  "................................",
-  "........................####....",
-  "................................",
-  "................................",
+  "####............####............",
+  "DDD#............####............",
+  "DDD#............................",
+  "DDD#....................####....",
+  "DDD#............................",
+  "DDD#............................",
   "################################",
   "################################",
 ];
@@ -184,7 +186,23 @@ function buildLevel(source) {
     }
   }
 
-  return { rows, spawnX, spawnFeetY, enemies };
+  return { rows, spawnX, spawnFeetY, enemies, doorShake: 0, doorShakeAge: 0 };
+}
+
+// The chest and the stone cage above the first flyer. They vanish after the sword is taken and the knight leaves.
+// A stone platform stays where the cage floor was.
+export function removeChestCage(level) {
+  for (let row = 2; row <= 5; row += 1) {
+    for (let col = 13; col <= 17; col += 1) {
+      const cell = level.rows[row][col];
+      if (cell === "#" || cell === "c" || cell === "C") {
+        level.rows[row][col] = ".";
+      }
+    }
+  }
+  for (let col = 13; col <= 17; col += 1) {
+    level.rows[5][col] = "#";
+  }
 }
 
 // The top of the tallest stone the knight can stand on.
@@ -231,10 +249,50 @@ function isSolid(level, col, row) {
   if (col >= line.length) {
     return false;
   }
-  return line[col] === "#" || line[col] === "T";
+  return line[col] === "#" || line[col] === "T" || line[col] === "D";
 }
 
-// Blocks that touch this rectangle. Used so the knight bumps into stone.
+// The stone frame around a door is thinner than a whole block.
+const FRAME = 8;
+
+function cellAt(level, col, row) {
+  if (row < 0 || col < 0 || row >= level.rows.length || col >= level.rows[row].length) {
+    return "";
+  }
+  return level.rows[row][col];
+}
+
+// A thin strip hugging the door. Normal stone blocks stay a full tile.
+function doorFrameRect(level, col, row) {
+  if (cellAt(level, col, row) !== "#") {
+    return null;
+  }
+
+  const x = col * TILE_SIZE;
+  const y = row * TILE_SIZE;
+  const rightIsDoor = cellAt(level, col + 1, row) === "D";
+  const leftIsDoor = cellAt(level, col - 1, row) === "D";
+  const belowIsDoor = cellAt(level, col, row + 1) === "D";
+  const belowIsLeftPost = cellAt(level, col, row + 1) === "#" && cellAt(level, col + 1, row + 1) === "D";
+  const belowIsRightPost = cellAt(level, col, row + 1) === "#" && cellAt(level, col - 1, row + 1) === "D";
+
+  if (rightIsDoor) {
+    return { x: x + TILE_SIZE - FRAME, y, width: FRAME, height: TILE_SIZE };
+  }
+  if (leftIsDoor) {
+    return { x, y, width: FRAME, height: TILE_SIZE };
+  }
+  if (belowIsDoor) {
+    return { x, y: y + TILE_SIZE - FRAME, width: TILE_SIZE, height: FRAME };
+  }
+  if (belowIsLeftPost) {
+    return { x: x + TILE_SIZE - FRAME, y: y + TILE_SIZE - FRAME, width: FRAME, height: FRAME };
+  }
+  if (belowIsRightPost) {
+    return { x, y: y + TILE_SIZE - FRAME, width: FRAME, height: FRAME };
+  }
+  return null;
+}
 export function tilesTouching(level, box) {
   const tiles = [];
   const colStart = Math.floor(box.x / TILE_SIZE);
@@ -247,7 +305,8 @@ export function tilesTouching(level, box) {
       if (!isSolid(level, col, row)) {
         continue;
       }
-      tiles.push({
+      const frame = doorFrameRect(level, col, row);
+      tiles.push(frame || {
         x: col * TILE_SIZE,
         y: row * TILE_SIZE,
         width: TILE_SIZE,
@@ -427,6 +486,52 @@ export function hitChest(level, attackBoxes) {
   }
 }
 
+const DOOR_SHAKE = 0.3;
+
+// A sword or wave that touches the door makes the door and its frame rattle.
+// It still rattles if the attack was already touching the door.
+export function hitDoor(level, attackBoxes, playerBox) {
+  const hitsDoor = (box) => {
+    if (!box) {
+      return false;
+    }
+    for (let row = 0; row < level.rows.length; row += 1) {
+      for (let col = 0; col < level.rows[row].length; col += 1) {
+        const cell = level.rows[row][col];
+        if (cell === "D") {
+          const doorTile = {
+            x: col * TILE_SIZE,
+            y: row * TILE_SIZE,
+            width: TILE_SIZE,
+            height: TILE_SIZE,
+          };
+          if (overlapsBox(doorTile, box)) {
+            return true;
+          }
+        }
+        const frame = doorFrameRect(level, col, row);
+        if (frame && overlapsBox(frame, box)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  const attackTouching = attackBoxes.some((box) => hitsDoor(box));
+  const playerTouching = playerBox && attackBoxes.some((box) => box) && hitsDoor(playerBox);
+  if (attackTouching || playerTouching) {
+    level.doorShake = DOOR_SHAKE;
+  }
+}
+
+export function updateDoorShake(level, deltaTime) {
+  if (level.doorShake > 0) {
+    level.doorShake = Math.max(0, level.doorShake - deltaTime);
+    level.doorShakeAge += deltaTime;
+  }
+}
+
 function drawChest(ctx, x, y, open) {
   const left = x - 8;
   const top = y + 2;
@@ -469,6 +574,45 @@ function drawChest(ctx, x, y, open) {
   ctx.fillRect(left + 17, top + 8, 7, 6);
   ctx.fillStyle = "#1a100c";
   ctx.fillRect(left + 19, top + 10, 3, 3);
+}
+
+function drawStoneDoor(ctx, x, y, width, height) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  ctx.fillStyle = "#2d333b";
+  ctx.fillRect(0, -FRAME, width + FRAME, FRAME);
+  ctx.fillRect(width, 0, FRAME, height);
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = "#161b22";
+  ctx.fillRect(0, 0, width, 5);
+  ctx.fillRect(0, height - 5, width, 5);
+  ctx.fillRect(0, 0, 5, height);
+  ctx.fillRect(width - 5, 0, 5, height);
+
+  const innerX = 8;
+  const innerY = 8;
+  const innerW = width - 16;
+  const innerH = height - 16;
+  ctx.fillStyle = "#3d4652";
+  ctx.fillRect(innerX, innerY, innerW, innerH);
+  ctx.fillStyle = "#0d1117";
+  ctx.fillRect(width / 2 - 2, innerY, 4, innerH);
+  ctx.fillStyle = "#484f58";
+  ctx.fillRect(innerX, innerY + 28, innerW, 5);
+  ctx.fillRect(innerX, innerY + innerH - 36, innerW, 5);
+
+  const cx = width / 2;
+  const cy = height / 2;
+  ctx.fillStyle = "#8b949e";
+  ctx.beginPath();
+  ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#1a100c";
+  ctx.beginPath();
+  ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 }
 
 function drawTrapDoor(ctx, x, y, open) {
@@ -515,6 +659,25 @@ export function drawLevel(ctx, level) {
         drawChest(ctx, col * TILE_SIZE, row * TILE_SIZE, level.rows[row][col] === "C");
         continue;
       }
+      if (level.rows[row][col] === "D") {
+        const above = row > 0 && level.rows[row - 1][col] === "D";
+        const left = col > 0 && level.rows[row][col - 1] === "D";
+        if (!above && !left) {
+          let width = 0;
+          while (col + width < level.rows[row].length && level.rows[row][col + width] === "D") {
+            width += 1;
+          }
+          let height = 0;
+          while (row + height < level.rows.length && level.rows[row + height][col] === "D") {
+            height += 1;
+          }
+          const wobble = level.doorShake > 0
+            ? Math.sin(level.doorShakeAge * 40) * 3 * (level.doorShake / DOOR_SHAKE)
+            : 0;
+          drawStoneDoor(ctx, col * TILE_SIZE + wobble, row * TILE_SIZE, width * TILE_SIZE, height * TILE_SIZE);
+        }
+        continue;
+      }
       if (level.rows[row][col] === "T" || level.rows[row][col] === "t") {
         const x = col * TILE_SIZE;
         const y = row * TILE_SIZE;
@@ -531,6 +694,10 @@ export function drawLevel(ctx, level) {
 
       const x = col * TILE_SIZE;
       const y = row * TILE_SIZE;
+      const frame = doorFrameRect(level, col, row);
+      if (frame) {
+        continue;
+      }
       ctx.fillStyle = "#2d333b";
       ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
 

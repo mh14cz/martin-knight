@@ -1,5 +1,5 @@
-import { dashJustPressed, isLeftHeld, isRightHeld, isJumpHeld, isDownHeld, isUpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js?v=105";
-import { tilesTouching } from "./level.js?v=105";
+import { dashJustPressed, isLeftHeld, isRightHeld, isJumpHeld, isDownHeld, isUpHeld, jumpJustPressed, swordJustPressed, waveJustPressed } from "./input.js?v=124";
+import { tilesTouching } from "./level.js?v=124";
 
 const PLAYER_WIDTH = 22;
 const PLAYER_HEIGHT = 36;
@@ -417,8 +417,8 @@ export function drawPlayer(ctx, player) {
   ctx.restore();
 }
 
-export function getWaveBox(player) {
-  if (player.waveTimer <= 0 || player.waveHasHit) {
+export function getWaveBox(player, keepAfterHit) {
+  if (player.waveTimer <= 0 || (player.waveHasHit && !keepAfterHit)) {
     return null;
   }
 

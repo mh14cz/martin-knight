@@ -1,4 +1,4 @@
-import { tilesTouching } from "./level.js?v=105";
+import { tilesTouching } from "./level.js?v=124";
 
 const BUG_WIDTH = 22;
 const BUG_HEIGHT = 16;
@@ -128,6 +128,30 @@ const POP_HEIGHT = 40;
 const POP_TIME = 0.2;
 const RETURN_SPEED = 70;
 
+// If the flyer bumps the cage, drop him just under the stone and send him home.
+function hitsCage(flyer, level) {
+  const box = {
+    x: flyer.x,
+    y: flyer.y,
+    width: BUG_WIDTH,
+    height: BUG_HEIGHT,
+  };
+  const tiles = tilesTouching(level, box);
+  if (tiles.length === 0) {
+    return false;
+  }
+  let underside = flyer.y;
+  for (const tile of tiles) {
+    if (tile.y + tile.height > underside) {
+      underside = tile.y + tile.height;
+    }
+  }
+  flyer.y = underside;
+  flyer.hitTimer = 0;
+  flyer.returning = true;
+  return true;
+}
+
 export function createFlyer(x, y) {
   return {
     kind: "flyer",
@@ -154,7 +178,7 @@ export function hitFlyer(flyer) {
   flyer.returning = false;
 }
 
-export function updateFlyer(flyer, deltaTime) {
+export function updateFlyer(flyer, level, deltaTime) {
   flyer.time += deltaTime;
   flyer.x = flyer.homeX;
   const hoverY = flyer.homeY + Math.sin(flyer.time * 2) * HOVER_BOB;
@@ -165,6 +189,10 @@ export function updateFlyer(flyer, deltaTime) {
     const gone = POP_TIME - Math.max(flyer.hitTimer, 0);
     const rise = Math.min(gone / 0.08, 1);
     flyer.y = flyer.homeY - POP_HEIGHT * rise;
+    // The cage is solid. A hit sends him back down to his hover path.
+    if (hitsCage(flyer, level)) {
+      return;
+    }
     if (flyer.hitTimer <= 0) {
       flyer.returning = true;
     }

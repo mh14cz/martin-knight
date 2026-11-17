@@ -1,8 +1,8 @@
-import { bounceBug, bugTouches, createBug, createFlyer, createHopper, explodeAt, hitFlyer, respawnEnemy, updateBug, updateExplosions, updateFlyer, updateHopper, drawBug, drawExplosions, drawFlyer, drawHopper, drawEnemyHealth, drawLightningMark, LIGHTNING_MARK } from "./enemy.js?v=105";
-import { createBlankRoom, createClimbRoom, createLevel, createRightRoom, createUpperRoom, drawLevel, findHighPlatform, hitChest, touchesSpike, useSwitch } from "./level.js?v=105";
-import { BALL_CHARGE, bouncePlayer, createPlayer, getAttackBox, getPlayerBox, getWaveBox, hurtPlayer, placePlayer, updateHeal, updatePlayer, drawBallCharge, drawHeal, drawPlayer, drawSlash, drawSwordItem, drawWave } from "./player.js?v=105";
-import { isLeftMouseHeld, isQuickClick, lightningJustPressed, respawnJustPressed } from "./input.js?v=105";
-import { chargeSpecial, drawFps, drawHealth, drawSpecial, SPECIAL_MAX } from "./ui.js?v=105";
+import { bounceBug, bugTouches, createBug, createFlyer, createHopper, explodeAt, hitFlyer, respawnEnemy, updateBug, updateExplosions, updateFlyer, updateHopper, drawBug, drawExplosions, drawFlyer, drawHopper, drawEnemyHealth, drawLightningMark, LIGHTNING_MARK } from "./enemy.js?v=124";
+import { createBlankRoom, createClimbRoom, createLevel, createRightRoom, createUpperRoom, drawLevel, findHighPlatform, hitChest, hitDoor, removeChestCage, touchesSpike, updateDoorShake, useSwitch } from "./level.js?v=124";
+import { BALL_CHARGE, bouncePlayer, createPlayer, getAttackBox, getPlayerBox, getWaveBox, hurtPlayer, placePlayer, updateHeal, updatePlayer, drawBallCharge, drawHeal, drawPlayer, drawSlash, drawSwordItem, drawWave } from "./player.js?v=124";
+import { isLeftMouseHeld, isQuickClick, lightningJustPressed, respawnJustPressed } from "./input.js?v=124";
+import { chargeSpecial, drawFps, drawHealth, drawSpecial, SPECIAL_MAX } from "./ui.js?v=124";
 
 const canvas = document.getElementById("game");
 // alpha: false keeps the canvas opaque, which is faster on this laptop.
@@ -200,6 +200,10 @@ function frame(now) {
 
   // Coming back into a room puts its enemies back at full health.
   if (room !== enteredRoom) {
+    // The chest and cage stay until the sword is taken and the knight leaves.
+    if (enteredRoom === cave && player.goldSword) {
+      removeChestCage(cave);
+    }
     for (const foe of foes) {
       const home = foe.area === "blank" ? blankRoom : cave;
       if (home === room) {
@@ -222,7 +226,7 @@ function frame(now) {
     }
     for (const flyer of flyers) {
       if (flyer.health > 0) {
-        updateFlyer(flyer, deltaTime);
+        updateFlyer(flyer, cave, deltaTime);
       }
     }
   }
@@ -234,7 +238,7 @@ function frame(now) {
     }
     for (const flyer of blankFlyers) {
       if (flyer.health > 0) {
-        updateFlyer(flyer, deltaTime);
+        updateFlyer(flyer, blankRoom, deltaTime);
       }
     }
   }
@@ -263,6 +267,9 @@ function frame(now) {
           continue;
         }
         bug.health -= 1;
+        if (bug.kind === "flyer" && bug.health > 0) {
+          hitFlyer(bug);
+        }
         lightningBolts.push(makeLightning(bug.x + 11, bug.y + 8));
         if (bug.health <= 0) {
           explodeAt(bug.x + 11, bug.y + 8);
@@ -319,6 +326,9 @@ function frame(now) {
       const step = BALL_SPEED * deltaTime;
       if (dist <= step || dist < 8) {
         target.health -= 1;
+        if (target.kind === "flyer" && target.health > 0) {
+          hitFlyer(target);
+        }
         if (target.health <= 0) {
           explodeAt(tx, ty);
         }
@@ -340,8 +350,11 @@ function frame(now) {
   }
   const slashBox = getAttackBox(player);
   const waveBox = getWaveBox(player);
+  const waveTouch = getWaveBox(player, true);
   // The sword from the chest only appears in the cave, so only that chest can open.
   const popped = room === cave ? hitChest(room, [slashBox, waveBox]) : null;
+  hitDoor(room, [slashBox, waveTouch], playerBox);
+  updateDoorShake(room, deltaTime);
   if (popped) {
     swordItem = { x: popped.x, y: popped.y, restY: popped.restY, vy: -360, age: 0 };
   }
